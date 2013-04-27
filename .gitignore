@@ -37,3 +37,4 @@ nosetests.xml
 .directory
 .settings
 *twistd.log
+*twistd.pid
