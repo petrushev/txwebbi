@@ -20,7 +20,7 @@ class BaseController(object):
         self.view = {}
         self.template = None
 
-        self.init(**kwargs)
+        reactor.callLater(0, self.init, **kwargs)
 
     def init(**kwargs):
         """This is the main entry point for processing the request"""
@@ -99,12 +99,12 @@ def bootstrapCommonFrontHandler(url_map, template_path, NotFoundController):
                 controllerClass, kwargs = NotFoundController, {}
 
             # init controller
-            controller = controllerClass(request = self, tpl_env = tpl_env, **kwargs)
+            self.controller = controllerClass(request = self, tpl_env = tpl_env, **kwargs)
 
             # disable controller for lost connections
             def connectionLost(reason):
-                controller._resume = False
-                controller.notifyDisconnect(reason)
+                self.controller._resume = False
+                self.controller.notifyDisconnect(reason)
             self.connectionLost = connectionLost
 
     return CommonFrontHandler
