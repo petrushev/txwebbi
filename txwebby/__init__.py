@@ -8,7 +8,8 @@ from werkzeug.exceptions import NotFound
 from twisted.internet import reactor
 from twisted.internet.task import deferLater
 from twisted.application.internet import TCPServer
-from twisted.web import http
+from twisted.web.http import OK, Request, INTERNAL_SERVER_ERROR, HTTPChannel,
+                             HTTPFactory
 from twisted.python import log
 
 class BaseController(object):
@@ -49,7 +50,7 @@ class BaseController(object):
                 (self.__class__.__name__, reason.getErrorMessage()))
         if hasattr(self, 'error_template'):
             self.template = self.error_template
-        self.setResponseCode(http.INTERNAL_SERVER_ERROR)
+        self.setResponseCode(INTERNAL_SERVER_ERROR)
         self.finish()
 
 class MemoryTemplateCache(BytecodeCache):
@@ -92,11 +93,11 @@ def bootstrapCommonFrontHandler(url_map, template_path, NotFoundController):
     # setup matcher for urls
     match = url_map.bind('').match
 
-    class CommonFrontHandler(http.Request):
+    class CommonFrontHandler(Request):
 
         def process(self):
             # set default headers
-            self.setResponseCode(http.OK)
+            self.setResponseCode(OK)
             self.setHeader('Content-Type', 'text/html; charset=UTF-8')
 
             # route to the proper controller class
@@ -118,10 +119,10 @@ def bootstrapCommonFrontHandler(url_map, template_path, NotFoundController):
 
 def bootstrapWebServer(FrontHandler):
 
-    class FrontChannel(http.HTTPChannel):
+    class FrontChannel(HTTPChannel):
         requestFactory = FrontHandler
 
-    class FrontHttpFactory(http.HTTPFactory):
+    class FrontHttpFactory(HTTPFactory):
         protocol = FrontChannel
 
     frontFactory = FrontHttpFactory()
