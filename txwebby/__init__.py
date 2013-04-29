@@ -6,8 +6,10 @@ from jinja2.loaders import DictLoader
 from werkzeug.exceptions import NotFound
 
 from twisted.internet import reactor
+from twisted.internet.task import deferLater
 from twisted.application.internet import TCPServer
 from twisted.web import http
+from twisted.python import log
 
 class BaseController(object):
 
@@ -21,7 +23,8 @@ class BaseController(object):
         self.template = None
 
         # start processing
-        reactor.callLater(0, self.init, **kwargs)
+        init_task = deferLater(reactor, 0, self.init, **kwargs)
+        init_task.addErrback(self.server_error)
 
     def init(**kwargs):
         """This is the main entry point for processing the request"""
@@ -40,6 +43,14 @@ class BaseController(object):
             content = tpl.render(**self.view)
             self.request.write(content.encode('utf-8'))
         self.request.finish()
+
+    def server_error(self, reason):
+        log.err('Error: controller %s says %s' % \
+                (self.__class__.__name__, reason.getErrorMessage()))
+        if hasattr(self, 'error_template'):
+            self.template = self.error_template
+        self.setResponseCode(http.INTERNAL_SERVER_ERROR)
+        self.finish()
 
 class MemoryTemplateCache(BytecodeCache):
     """Caches parsed jinja2 templates in memory"""
