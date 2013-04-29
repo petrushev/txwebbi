@@ -8,8 +8,7 @@ from werkzeug.exceptions import NotFound
 from twisted.internet import reactor
 from twisted.internet.task import deferLater
 from twisted.application.internet import TCPServer
-from twisted.web.http import OK, Request, INTERNAL_SERVER_ERROR, HTTPChannel,
-                             HTTPFactory
+from twisted.web.http import OK, Request, INTERNAL_SERVER_ERROR, HTTPChannel, HTTPFactory
 from twisted.python import log
 
 class BaseController(object):
