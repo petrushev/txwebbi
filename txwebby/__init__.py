@@ -20,6 +20,7 @@ class BaseController(object):
         self.view = {}
         self.template = None
 
+        # start processing
         reactor.callLater(0, self.init, **kwargs)
 
     def init(**kwargs):
@@ -39,9 +40,6 @@ class BaseController(object):
             content = tpl.render(**self.view)
             self.request.write(content.encode('utf-8'))
         self.request.finish()
-
-    def callLater(self, seconds, fc, *args, **kwargs):
-        reactor.callLater(seconds, fc, *args, **kwargs)
 
 class MemoryTemplateCache(BytecodeCache):
     """Caches parsed jinja2 templates in memory"""
@@ -80,7 +78,8 @@ def bootstrapCommonFrontHandler(url_map, template_path, NotFoundController):
                           bytecode_cache = MemoryTemplateCache(),
                           auto_reload = False)
 
-    url_map_bind = url_map.bind
+    # setup matcher for urls
+    match = url_map.bind('').match
 
     class CommonFrontHandler(http.Request):
 
@@ -89,12 +88,9 @@ def bootstrapCommonFrontHandler(url_map, template_path, NotFoundController):
             self.setResponseCode(http.OK)
             self.setHeader('Content-Type', 'text/html; charset=UTF-8')
 
-            # setup matcher for urls
-            matcher = url_map_bind('', default_method=self.method)
-
             # route to the proper controller class
             try:
-                controllerClass, kwargs = matcher.match(self.path)
+                controllerClass, kwargs = match(self.path, method = self.method)
             except NotFound:
                 controllerClass, kwargs = NotFoundController, {}
 
