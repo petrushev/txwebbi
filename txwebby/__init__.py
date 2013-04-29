@@ -49,7 +49,7 @@ class BaseController(object):
                 (self.__class__.__name__, reason.getErrorMessage()))
         if hasattr(self, 'error_template'):
             self.template = self.error_template
-        self.setResponseCode(INTERNAL_SERVER_ERROR)
+        self.request.setResponseCode(INTERNAL_SERVER_ERROR)
         self.finish()
 
 class MemoryTemplateCache(BytecodeCache):
