@@ -82,6 +82,16 @@ class PreloadedDictLoader(DictLoader):
                       for fullpath in fullpaths)
         DictLoader.__init__(self, mapper)
 
+class WebbiRequest(Request):
+
+    def __init__(self, channel, queued):
+        Request.__init__(self, channel, queued)
+        self._channel = channel
+
+    @property
+    def channel(self):
+        return self._channel
+
 def bootstrapCommonFrontHandler(url_map, template_path, NotFoundController):
     """Creates common front handler class"""
 
@@ -92,7 +102,7 @@ def bootstrapCommonFrontHandler(url_map, template_path, NotFoundController):
     # setup matcher for urls
     match = url_map.bind('').match
 
-    class CommonFrontHandler(Request):
+    class CommonFrontHandler(WebbiRequest):
 
         def process(self):
             # set default headers
