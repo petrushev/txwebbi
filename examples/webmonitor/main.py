@@ -51,7 +51,7 @@ class FrontHandler(BaseFrontHandler):
 
 WebServer = bootstrapWebServer(FrontHandler)
 
-# the following 3 lines are needed in case if we use the `twistd` infrastructure:
+# the following 3 lines are needed in case we use the `twistd` infrastructure:
 # twistd -ny main.py
 from twisted.application.service import Application
 application = Application('The Web')
