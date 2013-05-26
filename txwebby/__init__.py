@@ -127,6 +127,7 @@ def bootstrapCommonFrontHandler(url_map, template_path, NotFoundController):
     return CommonFrontHandler
 
 def bootstrapWebServer(FrontHandler):
+    """Creates a WebServer service for a given FrontHandler protocol"""
 
     class FrontChannel(HTTPChannel):
         requestFactory = FrontHandler
