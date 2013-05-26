@@ -45,8 +45,8 @@ class BaseController(object):
         self.request.finish()
 
     def server_error(self, reason):
-        log.err('Error: controller %s says %s' % \
-                (self.__class__.__name__, reason.getErrorMessage()))
+        log.err('Error: controller %s says:' % self.__class__.__name__)
+        log.err('    ' + reason.getErrorMessage())
         if hasattr(self, 'error_template'):
             self.template = self.error_template
         self.request.setResponseCode(INTERNAL_SERVER_ERROR)
@@ -115,7 +115,7 @@ def bootstrapCommonFrontHandler(url_map, template_path, NotFoundController):
             except NotFound:
                 controllerClass, kwargs = NotFoundController, {}
 
-            # init controller
+            # initialize controller
             self.controller = controllerClass(request = self, tpl_env = tpl_env, **kwargs)
 
             # disable controller for lost connections
