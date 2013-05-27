@@ -14,7 +14,8 @@ url_map = Map([
     Rule('/form', endpoint = controllers.Form),
     Rule('/report', endpoint = controllers.Report, methods=['GET']),
     Rule('/report', endpoint = controllers.PostReport, methods=['POST']),
-    Rule('/error', endpoint = controllers.ErrorPage),
+    Rule('/redirect', endpoint = controllers.Redirect),
+    Rule('/error', endpoint = controllers.ErrorPage)
 ])
 
 FrontHandler = bootstrapCommonFrontHandler(url_map, template_path, controllers.NotFound)

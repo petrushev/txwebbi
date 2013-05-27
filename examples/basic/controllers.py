@@ -41,6 +41,12 @@ class Report(BaseController):
 class PostReport(Report):
     pass
 
+class Redirect(BaseController):
+    def init(self):
+        self.request.setResponseCode(TEMPORARY_REDIRECT)
+        self.request.setHeader('Location', '/')
+        self.finish()
+
 class ErrorPage(BaseController):
     def init(self):
         raise Exception, 'Some error happened here.'

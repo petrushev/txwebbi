@@ -13,4 +13,4 @@ or by using the ``twistd`` daemon architecture:
 
 and go to `<http://localhost:8070>`_
 
-This example demonstrates the basic routing, jinja templates, writing simple controllers, handling GET and POST requests, deferring requests, serving error pages and handling server errors.
+This example demonstrates the basic routing, jinja templates, writing simple controllers, handling GET and POST requests, deferring requests, redirecting, serving error pages and handling server errors.
