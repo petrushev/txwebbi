@@ -41,6 +41,13 @@ class Report(BaseController):
 class PostReport(Report):
     pass
 
+class ParamReport(Report):
+    def init(self, timeout):
+        self.wait_seconds = timeout
+        self.view['start'] = datetime.utcnow()
+        d = deferLater(reactor, self.wait_seconds, self.step2)
+        d.addErrback(self.server_error)
+
 class Redirect(BaseController):
     def init(self):
         self.request.setResponseCode(TEMPORARY_REDIRECT)
