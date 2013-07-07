@@ -3,7 +3,7 @@ from datetime import datetime
 from twisted.web.http import NOT_FOUND, TEMPORARY_REDIRECT
 from twisted.internet import reactor
 
-from txwebby import BaseController
+from txwebbi import BaseController
 
 class NotFound(BaseController):
     def init(self):

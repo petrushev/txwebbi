@@ -3,7 +3,7 @@ from os.path import dirname
 
 from werkzeug.routing import Rule, Map
 
-from txwebby import bootstrapWebServer, bootstrapCommonFrontHandler
+from txwebbi import bootstrapWebServer, bootstrapCommonFrontHandler
 
 import controllers
 
