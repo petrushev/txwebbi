@@ -61,7 +61,7 @@ class BaseController(object):
             fh.close()
             self.finish()
         else:
-            deferLater(reactor, 1, self._serveChunk, fh, path)\
+            deferLater(reactor, 0, self._serveChunk, fh, path)\
                 .addErrback(self._errorServingChunk, fh, path)
 
     def _errorServingChunk(self, failure, fh, path):
