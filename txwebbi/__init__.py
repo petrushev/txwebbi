@@ -4,7 +4,7 @@ from twisted.application.internet import TCPServer
 from twisted.web.http import OK, Request, INTERNAL_SERVER_ERROR, HTTPChannel, HTTPFactory, NOT_FOUND
 from twisted.python import log
 
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import NotFound as NotFoundException
 from jinja2 import Environment
 
 from txwebbi.jinja import MemoryTemplateCache, PreloadedDictLoader
@@ -106,7 +106,7 @@ def bootstrapCommonFrontHandler(url_map, template_path, NotFoundController):
             # route to the proper controller class
             try:
                 controllerClass, kwargs = match(self.path, method = self.method)
-            except NotFound:
+            except NotFoundException:
                 controllerClass, kwargs = NotFoundController, {}
 
             # initialize controller
