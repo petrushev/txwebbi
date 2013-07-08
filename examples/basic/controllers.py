@@ -26,7 +26,7 @@ class Form(BaseController):
 
 class Report(BaseController):
     def init(self):
-        self.wait_seconds = int(self.request.args['num_seconds'][0])
+        self.wait_seconds = int(self.request.args.get('num_seconds', (0,))[0])
         self.view['start'] = datetime.utcnow()
         d = deferLater(reactor, self.wait_seconds, self.step2)
         d.addErrback(self.server_error)
