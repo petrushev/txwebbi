@@ -43,6 +43,7 @@ class BaseController(object):
         self.request.finish()
 
     def serveStatic(self, path):
+        """Should be called for delegation of serving static file at `path`"""
         try:
             fh = open(path, 'r')
         except (IOError, OSError):
@@ -69,6 +70,8 @@ class BaseController(object):
         self.finish()
 
     def server_error(self, reason):
+        """Called when unhandled error in controller occurs
+        can be reimplemented for other controllers"""
         log.err('Error: controller %s says:' % self.__class__.__name__)
         log.err('    ' + reason.getErrorMessage())
         if hasattr(self, 'error_template'):
