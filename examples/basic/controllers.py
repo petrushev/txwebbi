@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
+from os.path import abspath, dirname
+from os.path import join as path_join
 
-from twisted.web.http import NOT_FOUND, OK, TEMPORARY_REDIRECT
+from twisted.web.http import NOT_FOUND, TEMPORARY_REDIRECT
 from twisted.internet import reactor
 from twisted.internet.task import deferLater
 
@@ -47,6 +49,13 @@ class ParamReport(Report):
         self.view['start'] = datetime.utcnow()
         d = deferLater(reactor, self.wait_seconds, self.step2)
         d.addErrback(self.server_error)
+
+class Img(BaseController):
+    def init(self):
+        self.request.setHeader('Content-Type', 'image/jpg')
+        static_path = abspath(dirname(__file__))
+        static_path = path_join(static_path, 'static', 'test.jpg')
+        self.serveStatic(static_path)
 
 class Redirect(BaseController):
     def init(self):

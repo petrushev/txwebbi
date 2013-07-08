@@ -15,6 +15,7 @@ url_map = Map([
     Rule('/report', endpoint = controllers.Report, methods=['GET']),
     Rule('/report', endpoint = controllers.PostReport, methods=['POST']),
     Rule('/report/<int:timeout>', endpoint = controllers.ParamReport, methods=['GET']),
+    Rule('/img', endpoint = controllers.Img, methods=['GET']),
     Rule('/redirect', endpoint = controllers.Redirect),
     Rule('/error', endpoint = controllers.ErrorPage)
 ])
