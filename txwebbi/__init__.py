@@ -8,7 +8,7 @@ from werkzeug.exceptions import NotFound
 from twisted.internet import reactor
 from twisted.internet.task import deferLater
 from twisted.application.internet import TCPServer
-from twisted.web.http import OK, Request, INTERNAL_SERVER_ERROR, HTTPChannel, HTTPFactory
+from twisted.web.http import OK, Request, INTERNAL_SERVER_ERROR, HTTPChannel, HTTPFactory, NOT_FOUND
 from twisted.python import log
 
 class BaseController(object):
@@ -43,6 +43,32 @@ class BaseController(object):
             content = tpl.render(**self.view)
             self.request.write(content.encode('utf-8'))
         self.request.finish()
+
+    def serveStatic(self, path):
+        try:
+            fh = open(path, 'r')
+        except (IOError, OSError):
+            log.err('Error while reading static file @ ' + path)
+            self.request.setResponseCode(NOT_FOUND)
+            self.finish()
+
+        else:
+            deferLater(reactor, 0, self._serveChunk, fh, path)\
+                .addErrback(self._errorServingChunk, fh, path)
+
+    def _serveChunk(self, fh, path):
+        data = fh.read(2048)
+        self.request.write(data)
+        if len(data) < 2048:
+            fh.close()
+            self.finish()
+        else:
+            deferLater(reactor, 1, self._serveChunk, fh, path)\
+                .addErrback(self._errorServingChunk, fh, path)
+
+    def _errorServingChunk(self, failure, fh, path):
+        log.err('Error: possibly corrupted file @ ' + path + '\n    failure: ' + failure.getErrorMessage())
+        self.finish()
 
     def server_error(self, reason):
         log.err('Error: controller %s says:' % self.__class__.__name__)
