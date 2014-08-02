@@ -20,9 +20,9 @@ class BaseController(object):
         self.view = {}
         self.template = None
 
-        # start processing
+        # start processings
         init_task = deferLater(reactor, 0, self.init, **kwargs)
-        init_task.addErrback(self.server_error)
+        init_task.addErrback(self.serverError)
 
     def init(**kwargs):
         """This is the main entry point for processing the request"""
@@ -40,7 +40,15 @@ class BaseController(object):
             tpl = self.tpl_env.get_template(self.template)
             content = tpl.render(**self.view)
             self.request.write(content.encode('utf-8'))
+
         self.request.finish()
+
+    def redirect(self, location, permanent=False):
+        """Sends a finished redirect response"""
+        code = 301 if permanent else 302
+        self.request.setResponseCode(code)
+        self.request.setHeader('Location', location)
+        self.finish()
 
     def serveStatic(self, path):
         """Should be called for delegation of serving static file at `path`"""
@@ -56,38 +64,35 @@ class BaseController(object):
                 .addErrback(self._errorServingChunk, fh, path)
 
     def _serveChunk(self, fh, path):
-        data = fh.read(2048)
-        self.request.write(data)
-        if len(data) < 2048:
+        data = fh.read(16384)
+        len_data = len(data)
+        if len_data > 0:
+            self.request.write(data)
+        if len(data) < 16384:
             fh.close()
             self.finish()
+
         else:
             deferLater(reactor, 0, self._serveChunk, fh, path)\
                 .addErrback(self._errorServingChunk, fh, path)
 
     def _errorServingChunk(self, failure, fh, path):
-        log.err('Error: possibly corrupted file @ ' + path + '\n    failure: ' + failure.getErrorMessage())
+        log.err('Error: possibly corrupted file @ %s\n    %s' \
+                % (path, failure.getErrorMessage()))
+        fh.close()
         self.finish()
 
-    def server_error(self, reason):
+    def serverError(self, reason):
         """Called when unhandled error in controller occurs
         can be reimplemented for other controllers"""
-        log.err('Error: controller %s says:' % self.__class__.__name__)
-        log.err('    ' + reason.getErrorMessage())
+        log.err('Error: controller %s says: \n    %s' \
+                % (self.__class__.__name__, reason.getErrorMessage()))
+
         if hasattr(self, 'error_template'):
             self.template = self.error_template
+
         self.request.setResponseCode(INTERNAL_SERVER_ERROR)
         self.finish()
-
-class WebbiRequest(Request):
-
-    def __init__(self, channel, queued):
-        Request.__init__(self, channel, queued)
-        self._channel = channel
-
-    @property
-    def channel(self):
-        return self._channel
 
 def bootstrapCommonFrontHandler(url_map, template_path, NotFoundController):
     """Creates common front handler class"""
@@ -99,7 +104,7 @@ def bootstrapCommonFrontHandler(url_map, template_path, NotFoundController):
     # setup matcher for urls
     match = url_map.bind('').match
 
-    class CommonFrontHandler(WebbiRequest):
+    class CommonFrontHandler(Request):
 
         def process(self):
             # set default headers
