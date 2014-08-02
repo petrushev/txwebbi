@@ -26,11 +26,19 @@ class Form(BaseController):
 
 class Report(BaseController):
     def init(self):
-        self.wait_seconds = int(self.request.args.get('num_seconds', (0,))[0])
-        self.view['start'] = datetime.utcnow()
-        d = deferLater(reactor, self.wait_seconds, self.step2)
-        d.addErrback(self.server_error)
-        # we don't call finish here!
+        wait_seconds = self.request.args.get('num_seconds', (0,))[0]
+        try:
+            wait_seconds = float(wait_seconds)
+        except ValueError:
+            nf = NotFound(self.request, self.tpl_env)
+
+        else:
+            self.wait_seconds = wait_seconds
+
+            self.view['start'] = datetime.utcnow()
+            d = deferLater(reactor, self.wait_seconds, self.step2)
+            d.addErrback(self.serverError)
+            # we don't call finish here!
 
     def step2(self):
         self.view.update({'path': self.request.path,
@@ -48,7 +56,7 @@ class ParamReport(Report):
         self.wait_seconds = timeout
         self.view['start'] = datetime.utcnow()
         d = deferLater(reactor, self.wait_seconds, self.step2)
-        d.addErrback(self.server_error)
+        d.addErrback(self.serverError)
 
 class Img(BaseController):
     def init(self):
@@ -59,9 +67,7 @@ class Img(BaseController):
 
 class Redirect(BaseController):
     def init(self):
-        self.request.setResponseCode(TEMPORARY_REDIRECT)
-        self.request.setHeader('Location', '/')
-        self.finish()
+        self.redirect('/')
 
 class ErrorPage(BaseController):
     def init(self):
