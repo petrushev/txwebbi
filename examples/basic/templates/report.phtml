@@ -1,5 +1,5 @@
 The path of request is: <b>{{path}}</b> <br/>
-Response delivered after {{req_delta.seconds}} seconds;
+Response delivered after {{req_delta.total_seconds()}} seconds;
 started at: {{start.strftime("%M:%S.%f")}} and finished at: {{end.strftime("%M:%S.%f")}}. <br/>
 {% set delta = (end-start)-req_delta %}
-The offset was {{delta.seconds * 1000000 + delta.microseconds}} microseconds.
+The offset was {{delta.total_seconds() * 1000000}} microseconds.
