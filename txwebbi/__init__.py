@@ -1,3 +1,5 @@
+import gc
+
 from twisted.internet import reactor
 from twisted.internet.task import deferLater
 from twisted.application.internet import TCPServer
@@ -50,7 +52,7 @@ class BaseController(object):
         self.request.setHeader('Location', location)
         self.finish()
 
-    def serveStatic(self, path):
+    def serveStatic(self, path, buffer_kb = 16):
         """Should be called for delegation of serving static file at `path`"""
         try:
             fh = open(path, 'r')
@@ -60,33 +62,50 @@ class BaseController(object):
             self.finish()
 
         else:
-            deferLater(reactor, 0, self._serveChunk, fh, path)\
-                .addErrback(self._errorServingChunk, fh, path)
+            deferLater(reactor, 0, self._serveChunk, fh, path, buffer_kb)\
+                .addErrback(self._errorServingChunk, fh, path, buffer_kb)
 
-    def _serveChunk(self, fh, path):
-        data = fh.read(16384)
+            def connectionLost(reason):
+                log.err('Info: %s' % reason.getErrorMessage())
+                fh.close()
+                num_collected = gc.collect()
+                log.err('Info: collected objects %d' % num_collected)
+
+            self.request.connectionLost = connectionLost
+
+    def _serveChunk(self, fh, path, buffer_kb):
+        buffer_ = buffer_kb * 1024
+        try:
+            data = fh.read(buffer_)
+        except ValueError:
+            # file is closed
+            self.finish()
+            return
+
         len_data = len(data)
         if len_data > 0:
             self.request.write(data)
-        if len(data) < 16384:
+        if len_data < buffer_:
             fh.close()
             self.finish()
+            num_collected = gc.collect()
+            log.err('Info: collected objects %d' % num_collected)
+            return
 
-        else:
-            deferLater(reactor, 0, self._serveChunk, fh, path)\
-                .addErrback(self._errorServingChunk, fh, path)
+        deferLater(reactor, 0, self._serveChunk, fh, path, buffer_kb)\
+            .addErrback(self._errorServingChunk, fh, path, buffer_kb)
 
-    def _errorServingChunk(self, failure, fh, path):
-        log.err('Error: possibly corrupted file @ %s\n    %s' \
-                % (path, failure.getErrorMessage()))
+    def _errorServingChunk(self, failure, fh, path, buffer_kb):
+        log.err('Error: possibly corrupted file @ %s' % path)
+        log.err('    %s' % failure.getErrorMessage())
         fh.close()
         self.finish()
 
     def serverError(self, reason):
         """Called when unhandled error in controller occurs
         can be reimplemented for other controllers"""
-        log.err('Error: controller %s says: \n    %s' \
-                % (self.__class__.__name__, reason.getErrorMessage()))
+        log.err('Error: controller %s says:' % self.__class__.__name__)
+        log.err('    %s' % reason.getErrorMessage())
 
         if hasattr(self, 'error_template'):
             self.template = self.error_template

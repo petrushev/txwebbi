@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 from os.path import abspath, dirname
 from os.path import join as path_join
+from collections import deque
 
 from twisted.web.http import NOT_FOUND, TEMPORARY_REDIRECT
 from twisted.internet import reactor
 from twisted.internet.task import deferLater
+from twisted.python import log
 
 from txwebbi import BaseController
 
@@ -68,6 +70,51 @@ class Img(BaseController):
 class Redirect(BaseController):
     def init(self):
         self.redirect('/')
+
+class Servestream(BaseController):
+    def init(self):
+        self.request.setHeader('Content-Type', 'audio/mp3')
+        #self.request.setHeader('Content-Type', 'video/mp4')
+
+        self.stillReading = True
+        self._data = deque()
+
+        FrontHandler = self.request.__class__
+        log.msg('listener added!')
+        FrontHandler.listeners.add(self)
+
+        def connectionLost(reason):
+            self._data.clear()
+            self.stillReading = False
+            log.msg('listener removed!')
+            FrontHandler.listeners.remove(self)
+
+        self.request.connectionLost = connectionLost
+
+        reactor.callLater(0, self.play)
+
+    def streamFinished(self):
+        self.stillReading = False
+
+    def receiveUpdate(self, data):
+        self._data.append(data)
+
+    def play(self):
+        if len(self._data) > 0:
+            chunk = self._data.popleft()
+
+            self.request.write(chunk)
+
+            reactor.callLater(0, self.play)
+            return
+
+        if self.stillReading:
+            reactor.callLater(0.2, self.play)
+            return
+
+        # _data is empty and finished reading
+        self.finish()
+
 
 class ErrorPage(BaseController):
     def init(self):
